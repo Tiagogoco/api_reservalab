@@ -1,0 +1,62 @@
+[
+  {
+    "model": "sistema_buap_api.lab",
+    "pk": 1,
+    "fields": {
+      "name": "Laboratorio de Cómputo 1",
+      "building": "Edificio A",
+      "floor": "1",
+      "capacity": 30,
+      "type": "COMPUTO",
+      "status": "ACTIVE"
+    }
+  },
+  {
+    "model": "sistema_buap_api.lab",
+    "pk": 2,
+    "fields": {
+      "name": "Laboratorio de Electrónica",
+      "building": "Edificio B",
+      "floor": "2",
+      "capacity": 25,
+      "type": "ELECTRONICA",
+      "status": "ACTIVE"
+    }
+  },
+  {
+    "model": "sistema_buap_api.lab",
+    "pk": 3,
+    "fields": {
+      "name": "Laboratorio de Cómputo 2",
+      "building": "Edificio C",
+      "floor": "1",
+      "capacity": 35,
+      "type": "COMPUTO",
+      "status": "ACTIVE"
+    }
+  },
+  {
+    "model": "sistema_buap_api.lab",
+    "pk": 4,
+    "fields": {
+      "name": "Laboratorio de Redes",
+      "building": "Edificio A",
+      "floor": "3",
+      "capacity": 20,
+      "type": "REDES",
+      "status": "ACTIVE"
+    }
+  },
+  {
+    "model": "sistema_buap_api.lab",
+    "pk": 5,
+    "fields": {
+      "name": "Laboratorio de Biología",
+      "building": "Edificio B",
+      "floor": "1",
+      "capacity": 28,
+      "type": "BIOLOGIA",
+      "status": "MAINTENANCE"
+    }
+  }
+]

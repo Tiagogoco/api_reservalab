@@ -1,0 +1,132 @@
+[
+  {
+    "model": "sistema_buap_api.equipment",
+    "pk": 1,
+    "fields": {
+      "name": "Computadora Dell OptiPlex",
+      "description": "Computadora de escritorio Dell OptiPlex 7090",
+      "inventory_number": "COMP-001",
+      "total_quantity": 30,
+      "available_quantity": 30,
+      "status": "AVAILABLE",
+      "lab": 1
+    }
+  },
+  {
+    "model": "sistema_buap_api.equipment",
+    "pk": 2,
+    "fields": {
+      "name": "Osciloscopio Digital",
+      "description": "Osciloscopio digital Tektronix TBS2000",
+      "inventory_number": "OSC-001",
+      "total_quantity": 10,
+      "available_quantity": 8,
+      "status": "AVAILABLE",
+      "lab": 2
+    }
+  },
+  {
+    "model": "sistema_buap_api.equipment",
+    "pk": 3,
+    "fields": {
+      "name": "Multímetro Digital",
+      "description": "Multímetro digital Fluke 117",
+      "inventory_number": "MULT-001",
+      "total_quantity": 15,
+      "available_quantity": 12,
+      "status": "AVAILABLE",
+      "lab": 2
+    }
+  },
+  {
+    "model": "sistema_buap_api.equipment",
+    "pk": 4,
+    "fields": {
+      "name": "Switch Cisco Catalyst",
+      "description": "Switch de red Cisco Catalyst 2960",
+      "inventory_number": "SW-001",
+      "total_quantity": 8,
+      "available_quantity": 8,
+      "status": "AVAILABLE",
+      "lab": 4
+    }
+  },
+  {
+    "model": "sistema_buap_api.equipment",
+    "pk": 5,
+    "fields": {
+      "name": "Proyector Epson",
+      "description": "Proyector multimedia Epson PowerLite",
+      "inventory_number": "PROY-001",
+      "total_quantity": 5,
+      "available_quantity": 3,
+      "status": "AVAILABLE",
+      "lab": 1
+    }
+  },
+  {
+    "model": "sistema_buap_api.equipment",
+    "pk": 6,
+    "fields": {
+      "name": "Arduino Uno R3",
+      "description": "Placa de desarrollo Arduino Uno R3",
+      "inventory_number": "ARD-001",
+      "total_quantity": 20,
+      "available_quantity": 15,
+      "status": "AVAILABLE",
+      "lab": 2
+    }
+  },
+  {
+    "model": "sistema_buap_api.equipment",
+    "pk": 7,
+    "fields": {
+      "name": "Raspberry Pi 4",
+      "description": "Computadora de placa única Raspberry Pi 4 Model B",
+      "inventory_number": "RPI-001",
+      "total_quantity": 12,
+      "available_quantity": 10,
+      "status": "AVAILABLE",
+      "lab": 4
+    }
+  },
+  {
+    "model": "sistema_buap_api.equipment",
+    "pk": 8,
+    "fields": {
+      "name": "Cable HDMI",
+      "description": "Cable HDMI 2.0 de 2 metros",
+      "inventory_number": "HDMI-001",
+      "total_quantity": 25,
+      "available_quantity": 20,
+      "status": "AVAILABLE",
+      "lab": null
+    }
+  },
+  {
+    "model": "sistema_buap_api.equipment",
+    "pk": 9,
+    "fields": {
+      "name": "Fuente de Poder Variable",
+      "description": "Fuente de poder DC variable 0-30V 0-5A",
+      "inventory_number": "FP-001",
+      "total_quantity": 8,
+      "available_quantity": 6,
+      "status": "AVAILABLE",
+      "lab": 2
+    }
+  },
+  {
+    "model": "sistema_buap_api.equipment",
+    "pk": 10,
+    "fields": {
+      "name": "Kit de Herramientas",
+      "description": "Kit de herramientas para electrónica",
+      "inventory_number": "KIT-001",
+      "total_quantity": 10,
+      "available_quantity": 8,
+      "status": "AVAILABLE",
+      "lab": 2
+    }
+  }
+]

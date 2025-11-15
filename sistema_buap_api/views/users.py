@@ -1,144 +1,31 @@
-from django.shortcuts import render
-from django.db.models import *
-from django.db import transaction
-from sistema_buap_api.serializers import *
-from sistema_buap_api.models import *
-from rest_framework.authentication import BasicAuthentication, SessionAuthentication, TokenAuthentication
-from rest_framework.generics import CreateAPIView, DestroyAPIView, UpdateAPIView
-from rest_framework import permissions
-from rest_framework import generics
-from rest_framework import status
-from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.authtoken.models import Token
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.decorators import api_view
-from rest_framework.reverse import reverse
-from rest_framework import viewsets
-from django.shortcuts import get_object_or_404
-from django.core import serializers
-from django.utils.html import strip_tags
-from django.contrib.auth import authenticate, login
-from django.contrib.auth.models import Group
-from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
-from django_filters import rest_framework as filters
-from datetime import datetime
-from django.conf import settings
-from django.template.loader import render_to_string
-import string
-import random
-import json
+from rest_framework import filters, permissions, status, viewsets
+from rest_framework.response import Response
 
-class AdminAll(generics.CreateAPIView):
-    #Esta función es esencial para todo donde se requiera autorización de inicio de sesión (token)
-    permission_classes = (permissions.IsAuthenticated,)
-    def get(self, request, *args, **kwargs):
-        admin = Administradores.objects.filter(user__is_active = 1).order_by("id")
-        lista = AdminSerializer(admin, many=True).data
-        
-        return Response(lista, 200)
-    
-class AdminView(generics.CreateAPIView):
-    #Obtener usuario por ID
-    # permission_classes = (permissions.IsAuthenticated,)
-    def get(self, request, *args, **kwargs):
-        admin = get_object_or_404(Administradores, id = request.GET.get("id"))
-        admin = AdminSerializer(admin, many=False).data
-
-        return Response(admin, 200)
-    
-    #Registrar nuevo usuario
-    @transaction.atomic
-    def post(self, request, *args, **kwargs):
-
-        user = UserSerializer(data=request.data)
-        if user.is_valid():
-            #Grab user data
-            role = request.data['rol']
-            first_name = request.data['first_name']
-            last_name = request.data['last_name']
-            email = request.data['email']
-            password = request.data['password']
-            #Valida si existe el usuario o bien el email registrado
-            existing_user = User.objects.filter(email=email).first()
-
-            if existing_user:
-                return Response({"message":"Username "+email+", is already taken"},400)
-
-            user = User.objects.create( username = email,
-                                        email = email,
-                                        first_name = first_name,
-                                        last_name = last_name,
-                                        is_active = 1)
+from sistema_buap_api import models, permissions as custom_permissions, serializers
 
 
-            user.save()
-            user.set_password(password)
-            user.save()
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = models.User.objects.all().order_by("id")
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    search_fields = ["first_name", "last_name", "email", "matricula"]
+    filterset_fields = ["role"]
 
-            group, created = Group.objects.get_or_create(name=role)
-            group.user_set.add(user)
-            user.save()
+    def get_permissions(self):
+        if self.action in {"list", "retrieve", "create", "update", "partial_update", "destroy"}:
+            permission_classes = [custom_permissions.IsAdmin]
+        else:
+            permission_classes = [permissions.IsAuthenticated]
+        return [permission() for permission in permission_classes]
 
-            #Create a profile for the user
-            admin = Administradores.objects.create(user=user,
-                                            clave_admin= request.data["clave_admin"],
-                                            departamento= request.data["departamento"])
-            admin.save()
+    def get_serializer_class(self):
+        if self.action == "create":
+            return serializers.UserRegistrationSerializer
+        return serializers.UserSerializer
 
-            return Response({"admin_created_id": admin.id }, 201)
-
-        return Response(user.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-class AdminsViewEdit(generics.CreateAPIView):
-    permission_classes = (permissions.IsAuthenticated,)
-    #Contar el total de cada tipo de usuarios
-    def get(self, request, *args, **kwargs):
-        #Obtener total de admins
-        admin = Administradores.objects.filter(user__is_active = 1).order_by("id")
-        lista_admins = AdminSerializer(admin, many=True).data
-        # Obtienes la cantidad de elementos en la lista
-        total_admins = len(lista_admins)
-
-        #Obtener total de maestros
-        tecnicos = Tecnicos.objects.filter(user__is_active = 1).order_by("id")
-        lista_tecnicos = TecnicoSerializer(tecnicos, many=True).data
-        #Aquí convertimos los valores de nuevo a un array
-        if not lista_tecnicos:
-            return Response({},400)
-        for tecnico in lista_tecnicos:
-            tecnico["materias_json"] = json.loads(tecnico["materias_json"])
-        
-        total_tecnicos = len(lista_tecnicos)
-
-        #Obtener total de alumnos
-        alumnos = Alumnos.objects.filter(user__is_active = 1).order_by("id")
-        lista_alumnos = AlumnoSerializer(alumnos, many=True).data
-        total_alumnos = len(lista_alumnos)
-
-        return Response({'admins': total_admins, 'tecnicos': total_tecnicos, 'alumnos:':total_alumnos }, 200)
-    
-    #Editar administrador
-    def put(self, request, *args, **kwargs):
-        # iduser=request.data["id"]
-        admin = get_object_or_404(Administradores, id=request.data["id"])
-        admin.clave_admin = request.data["clave_admin"]
-        admin.departamento = request.data["departamento"]
-        admin.save()
-        temp = admin.user
-        temp.first_name = request.data["first_name"]
-        temp.last_name = request.data["last_name"]
-        temp.save()
-        user = AdminSerializer(admin, many=False).data
-
-        return Response(user,200)
-    
-    #Eliminar administrador
-    def delete(self, request, *args, **kwargs):
-        admin = get_object_or_404(Administradores, id=request.GET.get("id"))
-        try:
-            admin.user.delete()
-            return Response({"details":"Administrador eliminado"},200)
-        except Exception as e:
-            return Response({"details":"Algo pasó al eliminar"},400)
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance == request.user:
+            return Response({"detail": "No puedes eliminar tu propio usuario."}, status=status.HTTP_400_BAD_REQUEST)
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
