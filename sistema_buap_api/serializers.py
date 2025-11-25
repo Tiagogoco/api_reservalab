@@ -48,7 +48,7 @@ class UserRegistrationSerializer(UserSerializer):
     role = serializers.ChoiceField(
         choices=models.User.UserRole.choices,
         required=False,
-        default=models.User.UserRole.STUDENT
+        default=models.User.UserRole.ESTUDIANTE
     )
 
     class Meta(UserSerializer.Meta):
@@ -77,10 +77,10 @@ class LabSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "name",
-            "building",
-            "floor",
-            "capacity",
-            "type",
+            "edificio",
+            "piso",
+            "capacidad",
+            "tipo",
             "status",
             "created_at",
             "updated_at",
@@ -94,10 +94,10 @@ class EquipmentSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "name",
-            "description",
-            "inventory_number",
-            "total_quantity",
-            "available_quantity",
+            "descripcion",
+            "numeroInventario",
+            "cantidadTotal",
+            "cantidadDisponible",
             "status",
             "lab",
             "created_at",
@@ -113,10 +113,10 @@ class ReservationSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "lab",
-            "date",
-            "start_time",
-            "end_time",
-            "reason",
+            "fecha",
+            "horaInicio",
+            "horaFin",
+            "motivo",
             "cancel_reason",
             "status",
             "created_at",
@@ -138,11 +138,11 @@ class LoanSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "user",
-            "equipment",
-            "quantity",
-            "loan_date",
-            "due_date",
-            "return_date",
+            "equipo",
+            "cantidad",
+            "fechaPrestamo",
+            "fechaDevolucion",
+            "fechaEntrega",
             "damaged",
             "status",
             "created_at",

@@ -25,33 +25,32 @@ class UserAdmin(DjangoUserAdmin):
 
 @admin.register(models.Lab)
 class LabAdmin(admin.ModelAdmin):
-	list_display = ("name", "building", "floor", "capacity", "status")
+	list_display = ("name", "edificio", "piso", "capacidad", "status")
 	list_filter = ("status",)
-	search_fields = ("name", "building")
+	search_fields = ("name", "edificio")
 
 
 @admin.register(models.Equipment)
 class EquipmentAdmin(admin.ModelAdmin):
 	list_display = (
 		"name",
-		"inventory_number",
-		"total_quantity",
-		"available_quantity",
+		"numeroInventario",
+		"cantidadTotal",
+		"cantidadDisponible",
 		"status",
 	)
 	list_filter = ("status",)
-	search_fields = ("name", "inventory_number")
-
+	search_fields = ("name", "numeroInventario")
 
 @admin.register(models.Reservation)
 class ReservationAdmin(admin.ModelAdmin):
-	list_display = ("id", "lab", "user", "date", "start_time", "end_time", "status")
-	list_filter = ("status", "date")
+	list_display = ("id", "lab", "user", "fecha", "horaInicio", "horaFin", "status")
+	list_filter = ("status", "fecha")
 	search_fields = ("user__email", "lab__name")
 
 
 @admin.register(models.Loan)
 class LoanAdmin(admin.ModelAdmin):
-	list_display = ("id", "equipment", "user", "loan_date", "due_date", "status")
+	list_display = ("id", "equipo", "user", "fechaPrestamo", "fechaDevolucion", "status")
 	list_filter = ("status",)
-	search_fields = ("equipment__name", "user__email")
+	search_fields = ("equipo__name", "user__email")

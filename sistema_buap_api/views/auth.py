@@ -78,12 +78,12 @@ class RegisterView(APIView):
             role_map = {
                 'ADMIN': models.User.UserRole.ADMIN,
                 'TECH': models.User.UserRole.TECH,
-                'STUDENT': models.User.UserRole.STUDENT,
-                'alumno': models.User.UserRole.STUDENT,
+                'ESTUDIANTE': models.User.UserRole.ESTUDIANTE,
+                'alumno': models.User.UserRole.ESTUDIANTE,
                 'tecnico': models.User.UserRole.TECH,
                 'administrador': models.User.UserRole.ADMIN,
             }
-            data['role'] = role_map.get(data['role'], models.User.UserRole.STUDENT)
+            data['role'] = role_map.get(data['role'], models.User.UserRole.ESTUDIANTE)
         
         serializer = serializers.UserRegistrationSerializer(data=data)
         if not serializer.is_valid():
