@@ -12,15 +12,15 @@ class LoanViewSet(viewsets.ModelViewSet):
     queryset = models.Loan.objects.select_related("equipment", "user").all()
     serializer_class = serializers.LoanSerializer
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
-    filterset_fields = ["status", "equipment", "user", "loan_date"]
+    filterset_fields = ["status", "equipment", "user", "fechaPrestamo"]
     search_fields = ["equipment__name"]
 
     def get_queryset(self):
-        queryset = super().get_queryset().order_by("-loan_date")
+        queryset = super().get_queryset().order_by("-fechaPrestamo")
         user = self.request.user
         if not user.is_authenticated:
             return queryset.none()
-        if user.role == models.User.UserRole.STUDENT:
+        if user.role == models.User.UserRole.ESTUDIANTE:
             queryset = queryset.filter(user=user)
         return queryset
 
@@ -38,36 +38,36 @@ class LoanViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         request_user = self.request.user
         target_user = serializer.validated_data.get("user", request_user)
-        if request_user.role == models.User.UserRole.STUDENT:
+        if request_user.role == models.User.UserRole.ESTUDIANTE:
             target_user = request_user
         equipment = serializer.validated_data["equipment"]
-        quantity = serializer.validated_data["quantity"]
-        loan_date = serializer.validated_data["loan_date"]
-        due_date = serializer.validated_data["due_date"]
-        self._validate_new_loan(equipment, quantity, loan_date, due_date)
+        quantity = serializer.validated_data["cantidad"]
+        fechaPrestamo = serializer.validated_data["fechaPrestamo"]
+        fechaDevolucion = serializer.validated_data["fechaDevolucion"]
+        self._validate_new_loan(equipment, quantity, fechaPrestamo, fechaDevolucion)
         serializer.save(user=target_user)
 
     def perform_update(self, serializer):
         instance = serializer.instance
         equipment = serializer.validated_data.get("equipment", instance.equipment)
-        quantity = serializer.validated_data.get("quantity", instance.quantity)
-        loan_date = serializer.validated_data.get("loan_date", instance.loan_date)
-        due_date = serializer.validated_data.get("due_date", instance.due_date)
-        self._validate_new_loan(equipment, quantity, loan_date, due_date)
+        quantity = serializer.validated_data.get("cantidad", instance.cantidad)
+        fechaPrestamo = serializer.validated_data.get("fechaPrestamo", instance.fechaPrestamo)
+        fechaDevolucion = serializer.validated_data.get("fechaDevolucion", instance.fechaDevolucion)
+        self._validate_new_loan(equipment, quantity, fechaPrestamo, fechaDevolucion)
         serializer.save()
 
-    def _validate_new_loan(self, equipment, quantity, loan_date, due_date):
+    def _validate_new_loan(self, equipment, quantity, fechaPrestamo, fechaDevolucion):
         if quantity <= 0:
             raise ValidationError({"quantity": "La cantidad debe ser mayor que cero."})
-        if loan_date > due_date:
+        if fechaPrestamo > fechaDevolucion:
             raise ValidationError({"due_date": "La fecha de devolución debe ser posterior."})
-        if equipment.status != models.Equipment.EquipmentStatus.AVAILABLE:
+        if equipment.status != models.Equipment.EquipmentStatus.DISPONIBLE:
             raise ValidationError({"equipment": "El equipo no está disponible."})
-        if equipment.available_quantity < quantity:
+        if equipment.cantidadDisponible < quantity:
             raise ValidationError({"quantity": "Cantidad solicitada supera disponibilidad."})
 
     def _ensure_pending(self, loan):
-        if loan.status != models.Loan.LoanStatus.PENDING:
+        if loan.status != models.Loan.LoanStatus.PENDIENTE:
             raise ValidationError("Solo se pueden procesar préstamos pendientes.")
 
     @action(detail=True, methods=["post"], url_path="approve")
@@ -75,11 +75,11 @@ class LoanViewSet(viewsets.ModelViewSet):
         loan = self.get_object()
         self._ensure_pending(loan)
         equipment = loan.equipment
-        if equipment.available_quantity < loan.quantity:
+        if equipment.cantidadDisponible < loan.cantidad:
             raise ValidationError({"detail": "No hay unidades suficientes para aprobar."})
-        equipment.available_quantity -= loan.quantity
-        equipment.save(update_fields=["available_quantity", "updated_at"])
-        loan.status = models.Loan.LoanStatus.APPROVED
+        equipment.cantidadDisponible -= loan.cantidad
+        equipment.save(update_fields=["cantidadDisponible", "updated_at"])
+        loan.status = models.Loan.LoanStatus.APROBADO
         loan.save(update_fields=["status", "updated_at"])
         return Response(self.get_serializer(loan).data)
 
@@ -87,7 +87,7 @@ class LoanViewSet(viewsets.ModelViewSet):
     def reject(self, request, pk=None):
         loan = self.get_object()
         self._ensure_pending(loan)
-        loan.status = models.Loan.LoanStatus.REJECTED
+        loan.status = models.Loan.LoanStatus.RECHAZADO
         loan.save(update_fields=["status", "updated_at"])
         return Response(self.get_serializer(loan).data)
 
@@ -95,23 +95,23 @@ class LoanViewSet(viewsets.ModelViewSet):
     def return_item(self, request, pk=None):
         loan = self.get_object()
         if loan.status not in {
-            models.Loan.LoanStatus.APPROVED,
+            models.Loan.LoanStatus.APROBADO,
         }:
             raise ValidationError("Solo se pueden devolver préstamos aprobados.")
         damaged = bool(request.data.get("damaged", False))
-        loan.return_date = timezone.localdate()
-        loan.damaged = damaged
+        loan.fechaEntrega = timezone.localdate()
+        loan.danado = damaged
         if damaged:
-            loan.status = models.Loan.LoanStatus.DAMAGED
-            loan.equipment.status = models.Equipment.EquipmentStatus.MAINTENANCE
-            loan.equipment.save(update_fields=["status", "updated_at"])
+            loan.status = models.Loan.LoanStatus.DANADO
+            loan.equipo.status = models.Equipment.EquipmentStatus.MANTENIMIENTO
+            loan.equipo.save(update_fields=["status", "updated_at"])
         else:
-            loan.status = models.Loan.LoanStatus.RETURNED
-            equipment = loan.equipment
-            equipment.available_quantity = min(
-                equipment.total_quantity,
-                equipment.available_quantity + loan.quantity,
+            loan.status = models.Loan.LoanStatus.DEVUELTO
+            equipment = loan.equipo
+            equipment.cantidadDisponible = min(
+                equipment.cantidadTotal,
+                equipment.cantidadDisponible + loan.cantidad,
             )
-            equipment.save(update_fields=["available_quantity", "updated_at"])
-        loan.save(update_fields=["status", "return_date", "damaged", "updated_at"])
+            equipment.save(update_fields=["cantidadDisponible", "updated_at"])
+        loan.save(update_fields=["status", "fechaEntrega", "danado", "updated_at"])
         return Response(self.get_serializer(loan).data)

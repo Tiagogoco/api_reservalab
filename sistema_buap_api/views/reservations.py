@@ -15,15 +15,15 @@ class ReservationViewSet(viewsets.ModelViewSet):
     queryset = models.Reservation.objects.select_related("lab", "user").all()
     serializer_class = serializers.ReservationSerializer
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
-    filterset_fields = ["status", "lab", "user", "date"]
-    search_fields = ["reason"]
+    filterset_fields = ["status", "lab", "user", "fecha"]
+    search_fields = ["motivo"]
 
     def get_queryset(self):
-        queryset = super().get_queryset().order_by("-date", "-start_time")
+        queryset = super().get_queryset().order_by("-fecha", "-horaInicio")
         user = self.request.user
         if not user.is_authenticated:
             return queryset.none()
-        if user.role == models.User.UserRole.STUDENT:
+        if user.role == models.User.UserRole.ESTUDIANTE:
             queryset = queryset.filter(user=user)
         return queryset
 
@@ -35,13 +35,13 @@ class ReservationViewSet(viewsets.ModelViewSet):
         if date_from:
             try:
                 parsed = datetime.strptime(date_from, "%Y-%m-%d").date()
-                queryset = queryset.filter(date__gte=parsed)
+                queryset = queryset.filter(fecha__gte=parsed)
             except ValueError:
-                raise ValidationError({"date_from": "Formato inválido. Use YYYY-MM-DD."})
+                raise ValidationError({"date_to": "Formato inválido. Use YYYY-MM-DD."})
         if date_to:
             try:
                 parsed = datetime.strptime(date_to, "%Y-%m-%d").date()
-                queryset = queryset.filter(date__lte=parsed)
+                queryset = queryset.filter(fecha__lte=parsed)
             except ValueError:
                 raise ValidationError({"date_to": "Formato inválido. Use YYYY-MM-DD."})
         return queryset
@@ -62,14 +62,14 @@ class ReservationViewSet(viewsets.ModelViewSet):
         print(f"🔍 Usuario: {self.request.user}")
         request_user = self.request.user
         target_user = serializer.validated_data.get("user", request_user)
-        if request_user.role == models.User.UserRole.STUDENT:
+        if request_user.role == models.User.UserRole.ESTUDIANTE:
             target_user = request_user
         self._validate_reservation(
             instance=None,
             lab=serializer.validated_data["lab"],
-            date=serializer.validated_data["date"],
-            start_time=serializer.validated_data["start_time"],
-            end_time=serializer.validated_data["end_time"],
+            fecha=serializer.validated_data["fecha"],
+            horaInicio=serializer.validated_data["horaInicio"],
+            horaFin=serializer.validated_data["horaFin"],
         )
         serializer.save(user=target_user)
 
@@ -77,35 +77,35 @@ class ReservationViewSet(viewsets.ModelViewSet):
         instance = serializer.instance
         validated = serializer.validated_data
         lab = validated.get("lab", instance.lab)
-        date = validated.get("date", instance.date)
-        start_time = validated.get("start_time", instance.start_time)
-        end_time = validated.get("end_time", instance.end_time)
+        fecha = validated.get("fecha", instance.fecha)
+        horaInicio = validated.get("horaInicio", instance.horaInicio)
+        horaFin = validated.get("horaFin", instance.horaFin)
         self._validate_reservation(
             instance=instance,
             lab=lab,
-            date=date,
-            start_time=start_time,
-            end_time=end_time,
+            fecha=fecha,
+            horaInicio=horaInicio,
+            horaFin=horaFin,
         )
         serializer.save()
 
-    def _validate_reservation(self, *, instance, lab, date, start_time, end_time):
-        if lab.status != models.Lab.LabStatus.ACTIVE:
+    def _validate_reservation(self, *, instance, lab, fecha, horaInicio, horaFin):
+        if lab.status != models.Lab.LabStatus.ACTIVO:
             raise ValidationError({"lab": "El laboratorio no está disponible."})
-        if date < timezone.localdate():
-            raise ValidationError({"date": "No se puede reservar con fecha pasada."})
+        if fecha < timezone.localdate():
+            raise ValidationError({"fecha": "No se puede reservar con fecha pasada."})
         overlaps = models.Reservation.objects.filter(
             lab=lab,
-            date=date,
+            fecha=fecha,
             status__in=[
-                models.Reservation.ReservationStatus.PENDING,
-                models.Reservation.ReservationStatus.APPROVED,
+                models.Reservation.ReservationStatus.PENDIENTE,
+                models.Reservation.ReservationStatus.APROBADO,
             ],
         )
         if instance is not None:
             overlaps = overlaps.exclude(pk=instance.pk)
         overlaps = overlaps.filter(
-            Q(start_time__lt=end_time) & Q(end_time__gt=start_time)
+            Q(horaInicio__lt=horaFin) & Q(horaFin__gt=horaInicio)
         )
         if overlaps.exists():
             raise ValidationError("El laboratorio ya está reservado en ese horario.")
@@ -118,14 +118,14 @@ class ReservationViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def approve(self, request, pk=None):
         reservation = self.get_object()
-        self._set_status(reservation, models.Reservation.ReservationStatus.APPROVED)
+        self._set_status(reservation, models.Reservation.ReservationStatus.APROBADO)
         serializer = self.get_serializer(reservation)
         return Response(serializer.data)
 
     @action(detail=True, methods=["post"])
     def reject(self, request, pk=None):
         reservation = self.get_object()
-        self._set_status(reservation, models.Reservation.ReservationStatus.REJECTED)
+        self._set_status(reservation, models.Reservation.ReservationStatus.RECHAZADO)
         serializer = self.get_serializer(reservation)
         return Response(serializer.data)
 
@@ -133,11 +133,11 @@ class ReservationViewSet(viewsets.ModelViewSet):
     def cancel(self, request, pk=None):
         reservation = self.get_object()
         user = request.user
-        if user.role == models.User.UserRole.STUDENT and reservation.user_id != user.id:
+        if user.role == models.User.UserRole.ESTUDIANTE and reservation.user_id != user.id:
             return Response({"detail": "No autorizado."}, status=status.HTTP_403_FORBIDDEN)
         reason = request.data.get("reason", "")
         reservation.cancel_reason = reason
-        self._set_status(reservation, models.Reservation.ReservationStatus.CANCELLED)
+        self._set_status(reservation, models.Reservation.ReservationStatus.CANCELADO)
         reservation.save(update_fields=["cancel_reason", "status", "updated_at"])
         serializer = self.get_serializer(reservation)
         return Response(serializer.data)

@@ -8,8 +8,8 @@ class LabViewSet(viewsets.ModelViewSet):
     queryset = models.Lab.objects.all().order_by("name")
     serializer_class = serializers.LabSerializer
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
-    search_fields = ["name", "building"]
-    filterset_fields = ["status", "type"]
+    search_fields = ["name", "edificio"]
+    filterset_fields = ["status", "tipo"]
 
     def get_permissions(self):
         if self.action in {"create", "update", "partial_update", "destroy"}:

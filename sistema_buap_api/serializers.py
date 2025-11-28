@@ -60,9 +60,9 @@ class UserRegistrationSerializer(UserSerializer):
         }
 
     def validate(self, attrs):
-        # Asegurar que el rol por defecto sea STUDENT si no se especifica
+        # Asegurar que el rol por defecto sea ESTUDIANTE si no se especifica
         if "role" not in attrs:
-            attrs["role"] = models.User.UserRole.STUDENT
+            attrs["role"] = models.User.UserRole.ESTUDIANTE
         return attrs
 
 
@@ -125,9 +125,9 @@ class ReservationSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "status", "cancel_reason", "created_at", "updated_at")
 
     def validate(self, attrs):
-        start_time = attrs.get("start_time")
-        end_time = attrs.get("end_time")
-        if start_time and end_time and start_time >= end_time:
+        horaInicio = attrs.get("horaInicio")
+        horaFin = attrs.get("horaFin")
+        if horaInicio and horaFin and horaInicio >= horaFin:
             raise serializers.ValidationError("La hora de inicio debe ser menor que la hora de fin.")
         return super().validate(attrs)
 
@@ -143,7 +143,7 @@ class LoanSerializer(serializers.ModelSerializer):
             "fechaPrestamo",
             "fechaDevolucion",
             "fechaEntrega",
-            "damaged",
+            "danado",
             "status",
             "created_at",
             "updated_at",

@@ -71,7 +71,7 @@ class RegisterView(APIView):
             data['matricula'] = data.pop('student_id')
         
         # Remover campos que no existen en el modelo
-        data.pop('career', None)
+        data.pop('carrera', None)
         
         # Mapear rol del frontend al backend
         if 'role' in data:

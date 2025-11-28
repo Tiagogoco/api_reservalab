@@ -51,16 +51,16 @@ class User(AbstractUser):
 
 class Lab(TimeStampedModel):
     class LabStatus(models.TextChoices):
-        ACTIVE = "ACTIVE", "Active"
-        INACTIVE = "INACTIVE", "Inactive"
-        MAINTENANCE = "MAINTENANCE", "Maintenance"
+        ACTIVO = "ACTIVO", "Activo"
+        INACTIVO = "INACTIVO", "Inactivo"
+        MANTENIMIENTO = "MANTENIMIENTO", "Mantenimiento"
 
     name = models.CharField(max_length=255)
     edificio = models.CharField(max_length=255)
     piso = models.CharField(max_length=32)
     capacidad = models.PositiveIntegerField()
     tipo = models.CharField(max_length=64)
-    status = models.CharField(max_length=16, choices=LabStatus.choices, default=LabStatus.ACTIVE)
+    status = models.CharField(max_length=16, choices=LabStatus.choices, default=LabStatus.ACTIVO)
 
     class Meta:
         ordering = ["name"]
@@ -82,7 +82,7 @@ class Equipment(TimeStampedModel):
     cantidadTotal = models.PositiveIntegerField()
     cantidadDisponible = models.PositiveIntegerField()
     status = models.CharField(max_length=16, choices=EquipmentStatus.choices, default=EquipmentStatus.DISPONIBLE)
-    lab = models.ForeignKey(Lab, on_delete=models.SET_NULL, null=True, blank=True, related_name="equipment")
+    lab = models.ForeignKey(Lab, on_delete=models.SET_NULL, null=True, blank=True, related_name="equipo")
 
     class Meta:
         ordering = ["name"]
