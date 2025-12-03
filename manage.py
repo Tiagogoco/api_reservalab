@@ -3,6 +3,11 @@
 import os
 import sys
 
+# ********** AÑADE ESTAS DOS LÍNEAS AQUÍ **********
+import pymysql
+pymysql.install_as_MySQLdb()
+# **************************************************
+
 
 def main():
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sistema_buap_api.settings')
