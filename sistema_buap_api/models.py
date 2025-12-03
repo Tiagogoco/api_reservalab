@@ -32,13 +32,15 @@ class UserManager(BaseUserManager):
 class User(AbstractUser):
     class UserRole(models.TextChoices):
         ADMIN = "ADMIN", "Admin"
-        TECH = "TECH", "Tech"
+        TECNICO = "TECNICO", "Tecnico"
         ESTUDIANTE = "ESTUDIANTE", "Estudiante"
 
     username = None
     email = models.EmailField(unique=True)
     matricula = models.CharField(max_length=64, unique=True)
     role = models.CharField(max_length=16, choices=UserRole.choices, default=UserRole.ESTUDIANTE)
+    departamento = models.CharField(max_length=255, blank=True)
+    carrera = models.CharField(max_length=255, blank=True)
 
     objects = UserManager()
 
@@ -55,7 +57,7 @@ class Lab(TimeStampedModel):
         INACTIVO = "INACTIVO", "Inactivo"
         MANTENIMIENTO = "MANTENIMIENTO", "Mantenimiento"
 
-    name = models.CharField(max_length=255)
+    nombre = models.CharField(max_length=255)
     edificio = models.CharField(max_length=255)
     piso = models.CharField(max_length=32)
     capacidad = models.PositiveIntegerField()
@@ -63,36 +65,36 @@ class Lab(TimeStampedModel):
     status = models.CharField(max_length=16, choices=LabStatus.choices, default=LabStatus.ACTIVO)
 
     class Meta:
-        ordering = ["name"]
+        ordering = ["nombre"]
         verbose_name = "Lab"
         verbose_name_plural = "Labs"
 
     def __str__(self):
-        return f"{self.name} [{self.status}]"
+        return f"{self.nombre} [{self.status}]"
 
 
-class Equipment(TimeStampedModel):
-    class EquipmentStatus(models.TextChoices):
+class Equipo(TimeStampedModel):
+    class EquipoStatus(models.TextChoices):
         DISPONIBLE = "DISPONIBLE", "Disponible"
         MANTENIMIENTO = "MANTENIMIENTO", "Mantenimiento"
 
-    name = models.CharField(max_length=255)
+    nombre = models.CharField(max_length=255)
     descripcion = models.TextField(blank=True)
     numeroInventario = models.CharField(max_length=64, unique=True)
     cantidadTotal = models.PositiveIntegerField()
     cantidadDisponible = models.PositiveIntegerField()
-    status = models.CharField(max_length=16, choices=EquipmentStatus.choices, default=EquipmentStatus.DISPONIBLE)
+    status = models.CharField(max_length=16, choices=EquipoStatus.choices, default=EquipoStatus.DISPONIBLE)
     lab = models.ForeignKey(Lab, on_delete=models.SET_NULL, null=True, blank=True, related_name="equipo")
 
     class Meta:
-        ordering = ["name"]
+        ordering = ["nombre"]
 
     def __str__(self):
-        return f"{self.name} ({self.inventory_number})"
+        return f"{self.nombre} ({self.numeroInventario})"
 
 
-class Reservation(TimeStampedModel):
-    class ReservationStatus(models.TextChoices):
+class Reservacion(TimeStampedModel):
+    class ReservacionStatus(models.TextChoices):
         PENDIENTE = "PENDIENTE", "Pendiente"
         APROBADO = "APROBADO", "Aprobado"
         RECHAZADO = "RECHAZADO", "Rechazado"
@@ -104,8 +106,8 @@ class Reservation(TimeStampedModel):
     horaInicio = models.TimeField()
     horaFin = models.TimeField()
     motivo = models.CharField(max_length=512)
-    cancel_reason = models.CharField(max_length=512, blank=True)
-    status = models.CharField(max_length=16, choices=ReservationStatus.choices, default=ReservationStatus.PENDIENTE)
+    razonCancelacion = models.CharField(max_length=512, blank=True)
+    status = models.CharField(max_length=16, choices=ReservacionStatus.choices, default=ReservacionStatus.PENDIENTE)
 
     class Meta:
         ordering = ["-fecha", "-horaInicio"]
@@ -114,21 +116,21 @@ class Reservation(TimeStampedModel):
         return f"Reservation #{self.pk}"
 
 
-class Loan(TimeStampedModel):
-    class LoanStatus(models.TextChoices):
+class Prestamo(TimeStampedModel):
+    class PrestamoStatus(models.TextChoices):
         PENDIENTE = "PENDIENTE", "Pendiente"
         APROBADO = "APROBADO", "Aprobado"
         RECHAZADO = "RECHAZADO", "Rechazado"
         DEVUELTO = "DEVUELTO", "Devuelto"
         DANADO = "DANADO", "Danado"
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="loans")
-    equipo = models.ForeignKey(Equipment, on_delete=models.CASCADE, related_name="loans")
+    equipo = models.ForeignKey(Equipo, on_delete=models.CASCADE, related_name="loans")
     cantidad = models.PositiveIntegerField()
     fechaPrestamo = models.DateField()
     fechaDevolucion = models.DateField()
     fechaEntrega = models.DateField(null=True, blank=True)
     danado = models.BooleanField(default=False)
-    status = models.CharField(max_length=16, choices=LoanStatus.choices, default=LoanStatus.PENDIENTE)
+    status = models.CharField(max_length=16, choices=PrestamoStatus.choices, default=PrestamoStatus.PENDIENTE)
 
     class Meta:
         ordering = ["-fechaPrestamo"]

@@ -9,11 +9,11 @@ from sistema_buap_api import models, permissions as custom_permissions, serializ
 
 
 class LoanViewSet(viewsets.ModelViewSet):
-    queryset = models.Loan.objects.select_related("equipo", "user").all()
-    serializer_class = serializers.LoanSerializer
+    queryset = models.Prestamo.objects.select_related("equipo", "user").all()
+    serializer_class = serializers.PrestamoSerializer
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     filterset_fields = ["status", "equipo", "user", "fechaPrestamo"]
-    search_fields = ["equipo__name"]
+    search_fields = ["equipo__nombre"]
     def get_queryset(self):
         queryset = super().get_queryset().order_by("-fechaPrestamo")
         user = self.request.user
@@ -60,13 +60,13 @@ class LoanViewSet(viewsets.ModelViewSet):
             raise ValidationError({"cantidad": "La cantidad debe ser mayor que cero."})
         if fechaPrestamo > fechaDevolucion:
             raise ValidationError({"fechaDevolucion": "La fecha de devolución debe ser posterior."})
-        if equipo.status != models.Equipment.EquipmentStatus.DISPONIBLE:
+        if equipo.status != models.Equipo.EquipoStatus.DISPONIBLE:
             raise ValidationError({"equipo": "El equipo no está disponible."})
         if equipo.cantidadDisponible < cantidad:
             raise ValidationError({"cantidad": "Cantidad solicitada supera disponibilidad."})
     
     def _ensure_pending(self, prestamo):
-        if prestamo.status != models.Loan.LoanStatus.PENDIENTE:
+        if prestamo.status != models.Prestamo.PrestamoStatus.PENDIENTE:
             raise ValidationError("Solo se pueden procesar préstamos pendientes.")
 
     @action(detail=True, methods=["post"], url_path="approve")
@@ -78,7 +78,7 @@ class LoanViewSet(viewsets.ModelViewSet):
             raise ValidationError({"detail": "No hay unidades suficientes para aprobar."})
         equipo.cantidadDisponible -= prestamo.cantidad
         equipo.save(update_fields=["cantidadDisponible", "updated_at"])
-        prestamo.status = models.Loan.LoanStatus.APROBADO
+        prestamo.status = models.Prestamo.PrestamoStatus.APROBADO
         prestamo.save(update_fields=["status", "updated_at"])
         return Response(self.get_serializer(prestamo).data)
 
@@ -86,7 +86,7 @@ class LoanViewSet(viewsets.ModelViewSet):
     def reject(self, request, pk=None):
         prestamo = self.get_object()
         self._ensure_pending(prestamo)
-        prestamo.status = models.Loan.LoanStatus.RECHAZADO
+        prestamo.status = models.Prestamo.PrestamoStatus.RECHAZADO
         prestamo.save(update_fields=["status", "updated_at"])
         return Response(self.get_serializer(prestamo).data)
     
@@ -94,18 +94,18 @@ class LoanViewSet(viewsets.ModelViewSet):
     def return_item(self, request, pk=None):
         prestamo = self.get_object()
         if prestamo.status not in {
-            models.Loan.LoanStatus.APROBADO,
+            models.Prestamo.PrestamoStatus.APROBADO,
         }:
             raise ValidationError("Solo se pueden devolver préstamos aprobados.")
         danado = bool(request.data.get("danado", False))
         prestamo.fechaEntrega = timezone.localdate()
         prestamo.danado = danado
         if danado:
-            prestamo.status = models.Loan.LoanStatus.DANADO
-            prestamo.equipo.status = models.Equipment.EquipmentStatus.MANTENIMIENTO
+            prestamo.status = models.Prestamo.PrestamoStatus.DANADO
+            prestamo.equipo.status = models.Equipo.EquipoStatus.MANTENIMIENTO
             prestamo.equipo.save(update_fields=["status", "updated_at"])
         else:
-            prestamo.status = models.Loan.LoanStatus.DEVUELTO
+            prestamo.status = models.Prestamo.PrestamoStatus.DEVUELTO
             equipo = prestamo.equipo
             equipo.cantidadDisponible = min(
                 equipo.cantidadTotal,

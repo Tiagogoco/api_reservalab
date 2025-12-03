@@ -18,7 +18,7 @@ class IsAdminOrTech(permissions.BasePermission):
             return False
         return user.role in {
             models.User.UserRole.ADMIN,
-            models.User.UserRole.TECH,
+            models.User.UserRole.TECNICO,
         }
 
 

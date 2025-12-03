@@ -50,7 +50,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 response_data.update({
                     'user': user_data,
                     'token': response_data.get('access'),  # Backward compatibility
-                    'rol': user.role.lower(),  # Para compatibilidad con frontend
+                    'role': user.role.lower(),  # Para compatibilidad con frontend
                 })
                 response.data = response_data
         
@@ -77,10 +77,10 @@ class RegisterView(APIView):
         if 'role' in data:
             role_map = {
                 'ADMIN': models.User.UserRole.ADMIN,
-                'TECH': models.User.UserRole.TECH,
+                'TECH': models.User.UserRole.TECNICO,
                 'ESTUDIANTE': models.User.UserRole.ESTUDIANTE,
                 'alumno': models.User.UserRole.ESTUDIANTE,
-                'tecnico': models.User.UserRole.TECH,
+                'tecnico': models.User.UserRole.TECNICO,
                 'administrador': models.User.UserRole.ADMIN,
             }
             data['role'] = role_map.get(data['role'], models.User.UserRole.ESTUDIANTE)

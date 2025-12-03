@@ -16,21 +16,21 @@ class BaseReportView(APIView):
 
 class OccupancyReportView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        period = request.query_params.get("period")
-        fechaInicio, fechaFin, period_label = _parse_period(period)
-        reservations = models.Reservation.objects.filter(
-            status=models.Reservation.ReservationStatus.APPROVED,
-            date__range=(fechaInicio, fechaFin),
+        periodo = request.query_params.get("periodo")
+        fechaInicio, fechaFin, period_label = _parse_period(periodo)
+        reservaciones = models.Reservacion.objects.filter(
+            status=models.Reservacion.ReservacionStatus.APROBADO,
+            fecha__range=(fechaInicio, fechaFin),
         )
         data = []
-        total_days = (fechaFin - fechaInicio).days + 1
-        capacidad_total_horas = max(total_days * 12, 1)
+        diasTotales = (fechaFin - fechaInicio).days + 1
+        capacidad_total_horas = max(diasTotales * 12, 1)
         for lab in models.Lab.objects.all():
-            lab_reservations = reservations.filter(lab=lab).values(
+            reservacionesLab = reservaciones.filter(lab=lab).values(
                 "fechaInicio", "fechaFin"
             )
             horas_reservadas = 0
-            for item in lab_reservations:
+            for item in reservacionesLab:
                 delta = datetime.combine(datetime.min, item["fechaFin"]) - datetime.combine(
                     datetime.min, item["fechaInicio"]
                 )
@@ -38,9 +38,9 @@ class OccupancyReportView(BaseReportView):
             tasa_ocupacion = min(horas_reservadas / capacidad_total_horas, 1)
             data.append(
                 {
-                    "lab_id": lab.id,
-                    "lab_name": lab.name,
-                    "period": period_label,
+                    "idLab": lab.id,
+                    "nombreLab": lab.name,
+                    "periodo": period_label,
                     "tasa_ocupacion": round(tasa_ocupacion, 4),
                 }
             )
@@ -50,19 +50,19 @@ class OccupancyReportView(BaseReportView):
 class EquipmentUsageReportView(BaseReportView):
     def get(self, request, *args, **kwargs):
         start_date, end_date = _parse_date_range(request)
-        loans = models.Loan.objects.filter(
+        loans = models.Prestamo.objects.filter(
             status__in=[
-                models.Loan.LoanStatus.APROBADO,
-                models.Loan.LoanStatus.DEVUELTO,
-                models.Loan.LoanStatus.DANADO,
+                models.Prestamo.PrestamoStatus.APROBADO,
+                models.Prestamo.PrestamoStatus.DEVUELTO,
+                models.Prestamo.PrestamoStatus.DANADO,
             ],
-            loan_date__range=(start_date, end_date),
+            fechaPrestamo__range=(start_date, end_date),
         )
-        aggregated = loans.values("equipo_id", "equipo__name").annotate(prestamos_totales=Count("id"))
+        aggregated = loans.values("equipo_id", "equipo__nombre").annotate(prestamos_totales=Count("id"))
         data = [
             {
                 "equipo_id": item["equipo_id"],
-                "equipo_name": item["equipo__name"],
+                "equipo_name": item["equipo__nombre"],
                 "prestamos_totales": item["prestamos_totales"],
             }
             for item in aggregated
@@ -73,38 +73,38 @@ class EquipmentUsageReportView(BaseReportView):
 class IncidentReportView(BaseReportView):
     def get(self, request, *args, **kwargs):
         fechaInicio, fechaFin = _parse_date_range(request)
-        incidents = models.Loan.objects.filter(
-            status=models.Loan.LoanStatus.DANADO,
+        incidentes = models.Prestamo.objects.filter(
+            status=models.Prestamo.PrestamoStatus.DANADO,
             fechaEntrega__range=(fechaInicio, fechaFin),
         ).select_related("equipo")
         data = [
             {
                 "loan_id": loan.id,
-                "nombre": loan.equipo.name,
+                "nombre": loan.equipo.nombre,
                 "tipo_dano": "DANADO" if loan.danado else "DEVUELTO",
                 "reported_at": loan.updated_at.isoformat(),
             }
-            for loan in incidents
+            for loan in incidentes
         ]
         return Response(data)
 
 
 def _parse_period(period: str | None):
-    today = timezone.localdate()
+    hoy = timezone.localdate()
     if not period:
-        year, month = today.year, today.month
-        period_label = today.strftime("%Y-%m")
+        año, mes = hoy.año, hoy.mes
+        period_label = hoy.strftime("%Y-%m")
     else:
         try:
             parsed = datetime.strptime(period, "%Y-%m")
         except ValueError as exc:
             raise ValidationError({"period": "Formato inválido. Use YYYY-MM."}) from exc
-        year, month = parsed.year, parsed.month
+        año, mes = parsed.year, parsed.month
         period_label = parsed.strftime("%Y-%m")
     start_day = 1
-    ultimo_dia = calendar.monthrange(year, month)[1]
-    fechaInicio = datetime(year, month, start_day).date()
-    fechaFin = datetime(year, month, ultimo_dia).date()
+    ultimo_dia = calendar.monthrange(año, mes)[1]
+    fechaInicio = datetime(año, mes, start_day).date()
+    fechaFin = datetime(año, mes, ultimo_dia).date()
     return fechaInicio, fechaFin, period_label
 
 

@@ -54,7 +54,7 @@ class AlumnosView(generics.CreateAPIView):
         user = UserSerializer(data=request.data)
         if user.is_valid():
             #Grab user data
-            role = request.data['rol']
+            role = request.data['role']
             first_name = request.data['first_name']
             last_name = request.data['last_name']
             email = request.data['email']

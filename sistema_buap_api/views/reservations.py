@@ -12,8 +12,8 @@ from sistema_buap_api import models, permissions as custom_permissions, serializ
 
 
 class ReservationViewSet(viewsets.ModelViewSet):
-    queryset = models.Reservation.objects.select_related("lab", "user").all()
-    serializer_class = serializers.ReservationSerializer
+    queryset = models.Reservacion.objects.select_related("lab", "user").all()
+    serializer_class = serializers.ReservacionSerializer
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     filterset_fields = ["status", "lab", "user", "fecha"]
     search_fields = ["motivo"]
@@ -94,12 +94,12 @@ class ReservationViewSet(viewsets.ModelViewSet):
             raise ValidationError({"lab": "El laboratorio no está disponible."})
         if fecha < timezone.localdate():
             raise ValidationError({"fecha": "No se puede reservar con fecha pasada."})
-        overlaps = models.Reservation.objects.filter(
+        overlaps = models.Reservacion.objects.filter(
             lab=lab,
             fecha=fecha,
             status__in=[
-                models.Reservation.ReservationStatus.PENDIENTE,
-                models.Reservation.ReservationStatus.APROBADO,
+                models.Reservacion.ReservacionStatus.PENDIENTE,
+                models.Reservacion.ReservacionStatus.APROBADO,
             ],
         )
         if instance is not None:
@@ -110,34 +110,34 @@ class ReservationViewSet(viewsets.ModelViewSet):
         if overlaps.exists():
             raise ValidationError("El laboratorio ya está reservado en ese horario.")
 
-    def _set_status(self, reservation, status_value):
-        reservation.status = status_value
-        reservation.save(update_fields=["status", "updated_at"])
-        return reservation
+    def _set_status(self, reservacion, status_value):
+        reservacion.status = status_value
+        reservacion.save(update_fields=["status", "updated_at"])
+        return reservacion
 
     @action(detail=True, methods=["post"])
     def approve(self, request, pk=None):
-        reservation = self.get_object()
-        self._set_status(reservation, models.Reservation.ReservationStatus.APROBADO)
-        serializer = self.get_serializer(reservation)
+        reservacion = self.get_object()
+        self._set_status(reservacion, models.Reservacion.ReservacionStatus.APROBADO)
+        serializer = self.get_serializer(reservacion)
         return Response(serializer.data)
 
     @action(detail=True, methods=["post"])
     def reject(self, request, pk=None):
-        reservation = self.get_object()
-        self._set_status(reservation, models.Reservation.ReservationStatus.RECHAZADO)
-        serializer = self.get_serializer(reservation)
+        reservacion = self.get_object()
+        self._set_status(reservacion, models.Reservacion.ReservacionStatus.RECHAZADO)
+        serializer = self.get_serializer(reservacion)
         return Response(serializer.data)
 
     @action(detail=True, methods=["post"])
     def cancel(self, request, pk=None):
-        reservation = self.get_object()
+        reservacion = self.get_object()
         user = request.user
-        if user.role == models.User.UserRole.ESTUDIANTE and reservation.user_id != user.id:
+        if user.role == models.User.UserRole.ESTUDIANTE and reservacion.user_id != user.id:
             return Response({"detail": "No autorizado."}, status=status.HTTP_403_FORBIDDEN)
-        reason = request.data.get("reason", "")
-        reservation.cancel_reason = reason
-        self._set_status(reservation, models.Reservation.ReservationStatus.CANCELADO)
-        reservation.save(update_fields=["cancel_reason", "status", "updated_at"])
-        serializer = self.get_serializer(reservation)
+        motivo = request.data.get("motivo", "")
+        reservacion.motivo = motivo
+        self._set_status(reservacion, models.Reservacion.ReservacionStatus.CANCELADO)
+        reservacion.save(update_fields=["motivo", "status", "updated_at"])
+        serializer = self.get_serializer(reservacion)
         return Response(serializer.data)

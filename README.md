@@ -194,7 +194,9 @@ Response JSON
 - matricula (única, BUAP)
 - first_name
 - last_name
-- role (ADMIN, TECH, ESTUDIANTE)
+- role (ADMIN, TECNICO, ESTUDIANTE)
+- departamento (opcional)
+- carrera (opcional)
 - is_active
 - created_at
 - updated_at
@@ -203,7 +205,7 @@ Response JSON
 #### Laboratorio (Lab)
 ```python
 - id (PK)
-- name
+- nombre
 - edificio
 - piso
 - capacidad (máximo de usuarios simultáneos)
@@ -213,11 +215,11 @@ Response JSON
 - updated_at
 ```
 
-#### Equipo (Equipment)
+#### Equipo (Equipo)
 ```python
 - id (PK)
 - lab (FK → Lab)
-- name
+- nombre
 - descripcion
 - numeroInventario (único)
 - cantidadTotal
@@ -227,7 +229,7 @@ Response JSON
 - updated_at
 ```
 
-#### Reserva (Reservation)
+#### Reserva (Reservacion)
 ```python
 - id (PK)
 - user (FK → User)
@@ -235,14 +237,13 @@ Response JSON
 - fecha
 - horaInicio
 - horaFin
-- motivo
+- motivo (también se usa para cancelación)
 - status (PENDIENTE, APROBADO, RECHAZADO, CANCELADO)
-- razonCancelacion (nullable)
 - created_at
 - updated_at
 ```
 
-#### Préstamo (Loan)
+#### Préstamo (Prestamo)
 ```python
 - id (PK)
 - user (FK → User)
@@ -400,6 +401,7 @@ POST   /api/users/               - Crear usuario (admin)
 PATCH  /api/users/{id}/          - Editar usuario
 DELETE /api/users/{id}/          - Eliminar usuario (admin)
 ```
+Campos clave de usuario: `email`, `matricula`, `first_name`, `last_name`, `role` (ADMIN|TECNICO|ESTUDIANTE), `departamento` (opcional), `carrera` (opcional)
 
 ### Laboratorios
 ```
@@ -409,6 +411,7 @@ POST   /api/labs/                - Crear laboratorio (admin)
 PATCH  /api/labs/{id}/           - Editar laboratorio (admin)
 DELETE /api/labs/{id}/           - Eliminar laboratorio (admin)
 ```
+Modelo: `nombre`, `edificio`, `piso`, `capacidad`, `tipo`, `status`
 
 ### Equipos
 ```
@@ -418,6 +421,7 @@ POST   /api/equipment/           - Crear equipo (admin)
 PATCH  /api/equipment/{id}/      - Editar equipo (admin/tech)
 DELETE /api/equipment/{id}/      - Eliminar equipo (admin)
 ```
+Modelo: `nombre`, `numeroInventario`, `cantidadTotal`, `cantidadDisponible`, `status`, `lab`
 
 ### Reservas
 ```
@@ -430,6 +434,7 @@ POST   /api/reservations/{id}/approve/   - Aprobar (tech/admin)
 POST   /api/reservations/{id}/reject/    - Rechazar (tech/admin)
 POST   /api/reservations/{id}/cancel/    - Cancelar con razón
 ```
+Cancelación: payload `{ "motivo": "..." }` y respuesta refleja `motivo` actualizado con `status=CANCELADO`.
 
 ### Préstamos
 ```
@@ -440,6 +445,7 @@ POST   /api/loans/{id}/approve/  - Aprobar (tech/admin)
 POST   /api/loans/{id}/reject/   - Rechazar (tech/admin)
 POST   /api/loans/{id}/return/   - Registrar devolución (tech/admin)
 ```
+Modelo: `user`, `equipo`, `cantidad`, `fechaPrestamo`, `fechaDevolucion`, `fechaEntrega`, `danado`, `status`. Usar `fechaDevolucion` en payloads y tablas (no `fechaVencimiento`).
 
 ### Reportes
 ```

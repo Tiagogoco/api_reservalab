@@ -24,15 +24,7 @@ urlpatterns = [
     # Legacy compatibility
     path("token/", auth.CustomTokenObtainPairView.as_view(), name="token_legacy"),
     path("api/reports/occupancy/", reports.OccupancyReportView.as_view(), name="report_occupancy"),
-    path(
-        "api/reports/equipment-usage/",
-        reports.EquipmentUsageReportView.as_view(),
-        name="report_equipment_usage",
-    ),
-    path(
-        "api/reports/incidents/",
-        reports.IncidentReportView.as_view(),
-        name="report_incidents",
-    ),
+    path("api/reports/equipment-usage/",reports.EquipmentUsageReportView.as_view(), name="report_equipment_usage",),
+    path("api/reports/incidents/",reports.IncidentReportView.as_view(), name="report_incidents",),
     path("api/", include(router.urls)),
 ]

@@ -5,10 +5,10 @@ from sistema_buap_api import models, permissions as custom_permissions, serializ
 
 
 class EquipmentViewSet(viewsets.ModelViewSet):
-    queryset = models.Equipment.objects.select_related("lab").all().order_by("name")
-    serializer_class = serializers.EquipmentSerializer
+    queryset = models.Equipo.objects.select_related("lab").all().order_by("nombre")
+    serializer_class = serializers.EquipoSerializer
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
-    search_fields = ["name", "numeroInventario"]
+    search_fields = ["nombre", "numeroInventario"]
     filterset_fields = ["status", "lab"]
 
     def get_permissions(self):
